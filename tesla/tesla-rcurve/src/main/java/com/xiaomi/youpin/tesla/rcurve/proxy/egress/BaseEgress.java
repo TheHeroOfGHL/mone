@@ -16,6 +16,7 @@
 
 package com.xiaomi.youpin.tesla.rcurve.proxy.egress;
 
+import com.alibaba.nacos.api.exception.NacosException;
 import com.xiaomi.data.push.common.ReflectUtils;
 import com.xiaomi.data.push.common.Send;
 import com.xiaomi.data.push.uds.po.UdsCommand;
@@ -28,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
  * @Date 2021/1/13 17:11
  */
 @Slf4j
-public abstract class BaseEntry implements UdsProcessor {
+public abstract class BaseEgress implements UdsProcessor {
 
 
     @Override
@@ -40,14 +41,20 @@ public abstract class BaseEntry implements UdsProcessor {
         //调用的方法需要保证是同构的
         try {
             Object rr = ReflectUtils.invokeMethod(req, obj);
-            UdsCommand res = UdsCommand.createResponse(req, rr);
-            Send.send(req.getChannel(), res);
+            log.info("egress invoke result:{}", rr);
+            UdsCommand res = UdsCommand.createResponse(req);
+            res.setData(rr);
+            Send.sendResponse(req.getChannel(), res);
         } catch (Throwable ex) {
-            String message = "entry error:" + getBeanName(app) + ":" + ex.getMessage();
+            String message = ex.getMessage();
+            if (ex instanceof NacosException) {
+                message = ((NacosException) ex).getErrMsg();
+            }
+            message = "entry error:" + getBeanName(app) + ":" + message;
             log.error("{}", message);
             Send.sendMessage(req.getChannel(), message);
             UdsCommand res = UdsCommand.createErrorResponse(req.getId(), message);
-            Send.send(req.getChannel(), res);
+            Send.sendResponse(req.getChannel(), res);
         }
     }
 

@@ -111,4 +111,19 @@ public class HttpTest {
         Assert.assertNotNull(res);
     }
 
+    /**
+     * 测试中间件rocketmq的调用
+     */
+    @Test
+    public void testNacos() {
+        ProxyRequest request = new ProxyRequest();
+        request.setApp("demo_one_app");
+        request.setServiceName("com.xiaomi.mone.mds.service.DemoOneService");
+        request.setMethodName("nacos");
+        request.setTimeout(1000L);
+        String res = HttpClient.post(url, new Gson().toJson(request));
+        System.out.println(res);
+        Assert.assertNotNull(res);
+    }
+
 }

@@ -50,7 +50,7 @@ public class DubboCallProcessor implements UdsProcessor {
 
     @Override
     public void processRequest(UdsCommand udsCommand) {
-        UdsCommand udsRes = UdsCommand.createResponse(udsCommand.getId());
+        UdsCommand udsRes = UdsCommand.createResponse(udsCommand);
         String serviceName = udsCommand.getServiceName();
         String methodName = udsCommand.getMethodName();
 

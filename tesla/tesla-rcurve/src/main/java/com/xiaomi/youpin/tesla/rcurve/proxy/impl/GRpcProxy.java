@@ -71,7 +71,8 @@ public class GRpcProxy implements Proxy<GrpcMeshRequest, MeshResponse> {
             MeshResponse meshResponse = new MeshResponse();
             meshResponse.setCode(res.getCode());
             meshResponse.setMessage(res.getMessage());
-            meshResponse.setData(res.getData());
+            String data = res.getData(String.class);
+            meshResponse.setData(data);
             return meshResponse;
         } catch (Throwable ex) {
             MeshResponse res = new MeshResponse();

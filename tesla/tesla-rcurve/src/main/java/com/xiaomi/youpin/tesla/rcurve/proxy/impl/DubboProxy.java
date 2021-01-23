@@ -47,7 +47,8 @@ public class DubboProxy implements Proxy<MeshRequest, MeshResponse>, MeshService
         request.setTimeout(1000);
         UdsCommand res = udsServer.call(request);
         MeshResponse response = new MeshResponse();
-        response.setData(res.getData());
+        String data = res.getData(String.class);
+        response.setData(data);
         return response;
     }
 
