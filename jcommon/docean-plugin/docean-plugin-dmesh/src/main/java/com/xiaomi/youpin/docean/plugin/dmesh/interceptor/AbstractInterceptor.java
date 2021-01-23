@@ -17,12 +17,14 @@
 package com.xiaomi.youpin.docean.plugin.dmesh.interceptor;
 
 import com.google.gson.Gson;
+import com.xiaomi.data.push.common.UdsException;
 import com.xiaomi.data.push.uds.UdsClient;
+import com.xiaomi.data.push.uds.codes.CodesFactory;
+import com.xiaomi.data.push.uds.codes.ICodes;
 import com.xiaomi.data.push.uds.po.UdsCommand;
 import com.xiaomi.youpin.docean.Ioc;
 import com.xiaomi.youpin.docean.plugin.config.Config;
-import com.xiaomi.youpin.docean.plugin.dmesh.MeshResponse;
-import com.xiaomi.youpin.docean.plugin.dmesh.anno.MeshReference;
+import com.xiaomi.youpin.docean.plugin.dmesh.anno.MeshMsService;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
@@ -32,28 +34,28 @@ import java.util.Arrays;
 
 /**
  * @author goodjava@qq.com
- * @date 1/9/21
- * <p>
- * 这里会处理dubbo的调用(看起来是调用本地方法,其实是调用远程的dubbo服务)
+ * @date 1/23/21
  */
 @Slf4j
-public class CallMethodInterceptor implements MethodInterceptor {
-
-    private Gson gson = new Gson();
+public abstract class AbstractInterceptor implements MethodInterceptor {
 
     private Ioc ioc;
-    private Config config;
-    private MeshReference reference;
 
-    public CallMethodInterceptor(Ioc ioc, Config config, MeshReference reference) {
+    private Config config;
+
+    private MeshMsService reference;
+
+    public AbstractInterceptor(Ioc ioc, Config config, MeshMsService reference) {
         this.ioc = ioc;
         this.config = config;
         this.reference = reference;
     }
 
+    public abstract void intercept0(UdsCommand req);
+
+
     @Override
     public Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {
-
         String mn = method.getName();
         if ("getClass".equals(mn)) {
             return methodProxy.invokeSuper(o, objects);
@@ -75,34 +77,31 @@ public class CallMethodInterceptor implements MethodInterceptor {
         UdsClient client = ioc.getBean(UdsClient.class);
         UdsCommand command = UdsCommand.createRequest();
         command.setApp(config.get("uds_app", ""));
-        command.setCmd("dubboCall");
-        command.setServiceName(reference.interfaceClass().getName());
+        command.setCmd(reference.name());
+        command.setServiceName(reference.name());
         command.setMethodName(method.getName());
-        //远程的app
+        command.setParamTypes(Arrays.stream(method.getParameterTypes()).map(it -> it.getName()).toArray(String[]::new));
+        command.setParams(Arrays.stream(objects).map(it -> new Gson().toJson(it)).toArray(String[]::new));
+        ICodes codes = CodesFactory.getCodes(command.getSerializeType());
+        command.setByteParams(Arrays.stream(objects).map(it -> codes.encode(it)).toArray(byte[][]::new));
         command.setRemoteApp(reference.app());
         command.setTimeout(reference.timeout());
-        //是网格dubbo调用,还是普通dubbo调用
-        command.putAtt("mesh", String.valueOf(reference.mesh()));
-        command.putAtt("group", reference.group());
-        command.putAtt("version", reference.version());
-        command.putAtt("timeout", String.valueOf(reference.timeout()));
 
-        command.setParamTypes(Arrays.stream(method.getParameterTypes()).map(it -> it.getName()).toArray(String[]::new));
-        command.setParams(Arrays.stream(objects).map(it -> gson.toJson(it)).toArray(String[]::new));
+        this.intercept0(command);
 
         UdsCommand res = client.call(command);
 
         //调用发生了错误
         if (res.getCode() != 0) {
-            throw new RuntimeException(res.getMessage());
+            throw new UdsException(res.getMessage());
         }
 
-        String data = res.getData(String.class);
-        log.info("mesh plugin receive:{}", data);
+        if (method.getReturnType().equals(void.class)) {
+            return null;
+        }
 
-        MeshResponse r = new Gson().fromJson(data, MeshResponse.class);
-
-        Object resObj = gson.fromJson(r.getData(), method.getReturnType());
-        return resObj;
+        Object r = res.getData(method.getReturnType());
+        log.info("call method receive:{}", r);
+        return r;
     }
 }

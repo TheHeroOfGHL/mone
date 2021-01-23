@@ -16,13 +16,11 @@
 
 package com.xiaomi.data.push.common;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import com.xiaomi.data.push.uds.codes.HessianCodes;
 import com.xiaomi.data.push.uds.po.UdsCommand;
 import lombok.extern.slf4j.Slf4j;
-import org.msgpack.jackson.dataformat.MessagePackFactory;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -34,8 +32,6 @@ import java.util.stream.IntStream;
  */
 @Slf4j
 public abstract class ReflectUtils {
-
-    private static Gson gson = new Gson();
 
     public static Object invokeMethod(UdsCommand req, Object obj) {
 
@@ -53,6 +49,12 @@ public abstract class ReflectUtils {
         try {
             if (types.length > 0) {
                 Class[] clazzArray = Arrays.stream(types).map(i -> {
+                    if (i.equals("int")) {
+                        return int.class;
+                    }
+                    if (i.equals("long")) {
+                        return long.class;
+                    }
                     try {
                         return Class.forName(i);
                     } catch (ClassNotFoundException e) {
@@ -65,7 +67,7 @@ public abstract class ReflectUtils {
                     params = convert(clazzArray, paramArray);
                 }
                 if (type == 1) {
-                    params = convertMsgpack(clazzArray, paramArray);
+                    params = convertHessian(clazzArray, paramArray);
                 }
                 return method.invoke(obj, params);
             } else {
@@ -86,29 +88,26 @@ public abstract class ReflectUtils {
     }
 
     /**
-     * json 转换
+     * gson转换
      *
      * @param classes
      * @param params
      * @return
      */
     public static Object[] convert(Class[] classes, byte[][] params) {
-        Object[] res = IntStream.range(0, classes.length).mapToObj(i -> gson.fromJson(new String(params[i]), classes[i])).toArray();
-        return res;
+        return IntStream.range(0, classes.length).mapToObj(i -> new Gson().fromJson(new String(params[i]), classes[i])).toArray();
     }
 
-
-    public static Object[] convertMsgpack(Class[] classes, byte[][] params) {
-        ObjectMapper objectMapper = new ObjectMapper(new MessagePackFactory());
-        Object[] res = IntStream.range(0, classes.length).mapToObj(i -> {
-            try {
-                return objectMapper.readValue(params[i], classes[i]);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }).toArray();
-        return res;
+    /**
+     * hessian转换
+     *
+     * @param classes
+     * @param params
+     * @return
+     */
+    public static Object[] convertHessian(Class[] classes, byte[][] params) {
+        return IntStream.range(0, classes.length).mapToObj(i -> new HessianCodes().decode(params[i], classes[i])).toArray();
     }
+
 
 }

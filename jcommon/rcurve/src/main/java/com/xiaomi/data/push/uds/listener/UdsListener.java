@@ -14,22 +14,14 @@
  *    limitations under the License.
  */
 
-package com.xiaomi.data.push.uds.po;
+package com.xiaomi.data.push.uds.listener;
 
-import lombok.Data;
-
-import java.io.Serializable;
 
 /**
  * @author goodjava@qq.com
  */
-@Data
-public class UdsPing implements Serializable {
+public abstract class UdsListener {
 
-    private String data = "ping";
-
-    private String id;
-
-    private long time;
+    public abstract void handle(UdsEvent event);
 
 }

@@ -14,15 +14,30 @@
  *    limitations under the License.
  */
 
-package com.xiaomi.data.push.uds.po;
+package com.xiaomi.data.push.uds.codes;
 
-import lombok.Data;
+import com.xiaomi.data.push.common.UdsException;
 
 /**
  * @author goodjava@qq.com
+ * @date 1/22/21
  */
-@Data
-public class UdsRequest extends UdsCommand {
+public class CodesFactory {
 
+    private static GsonCodes gsonCodes = new GsonCodes();
+
+    private static HessianCodes hessianCodes = new HessianCodes();
+
+    public static ICodes getCodes(byte id) {
+        if (id == gsonCodes.type()) {
+            return gsonCodes;
+        }
+
+        if (id == hessianCodes.type()) {
+            return hessianCodes;
+        }
+
+        throw new UdsException("type error");
+    }
 
 }

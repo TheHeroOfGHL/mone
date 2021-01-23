@@ -16,7 +16,6 @@
 
 package com.xiaomi.data.push.uds.processor.client;
 
-import com.google.gson.Gson;
 import com.xiaomi.data.push.common.ReflectUtils;
 import com.xiaomi.data.push.common.Send;
 import com.xiaomi.data.push.uds.po.UdsCommand;
@@ -43,24 +42,20 @@ public class CallMethodProcessor implements UdsProcessor {
 
     @Override
     public void processRequest(UdsCommand req) {
-        UdsCommand response = UdsCommand.createResponse(req.getId());
+        UdsCommand response = UdsCommand.createResponse(req);
         try {
             Object obj = beanFactory.apply(req);
             String[] types = req.getParamTypes() == null ? new String[]{} : req.getParamTypes();
             String[] paramArray = req.getParams() == null ? new String[]{} : req.getParams();
-            log.info("invoke method : {}->{} {} {}", req.getServiceName(), req.getMethodName(), Arrays.toString(types), Arrays.toString(paramArray));
+            log.info("invoke method : {} {} {} {}", req.getServiceName(), req.getMethodName(), Arrays.toString(types), Arrays.toString(paramArray));
             Object res = ReflectUtils.invokeMethod(req.getMethodName(), obj, types, paramArray);
-            if (res instanceof String) {
-                response.setData(res.toString());
-            } else {
-                response.setData(new Gson().toJson(res));
-            }
+            response.setData(res);
         } catch (Throwable ex) {
             log.error(ex.getMessage(), ex);
             response.setCode(500);
             response.setMessage("invoke method error:" + req.getServiceName() + "->" + req.getMethodName() + " error:" + ex.getMessage());
         }
-        Send.send(req.getChannel(), response);
+        Send.sendResponse(req.getChannel(), response);
     }
 
     @Override
