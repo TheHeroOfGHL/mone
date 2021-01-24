@@ -16,10 +16,12 @@
 
 package com.xiaomi.data.push.uds.processor.client;
 
-import com.xiaomi.data.push.common.ReflectUtils;
+import com.xiaomi.data.push.common.CovertUtils;
 import com.xiaomi.data.push.common.Send;
 import com.xiaomi.data.push.uds.po.UdsCommand;
 import com.xiaomi.data.push.uds.processor.UdsProcessor;
+import com.xiaomi.youpin.docean.common.MethodReq;
+import com.xiaomi.youpin.docean.common.ReflectUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Arrays;
@@ -48,7 +50,14 @@ public class CallMethodProcessor implements UdsProcessor {
             String[] types = req.getParamTypes() == null ? new String[]{} : req.getParamTypes();
             String[] paramArray = req.getParams() == null ? new String[]{} : req.getParams();
             log.info("invoke method : {} {} {} {}", req.getServiceName(), req.getMethodName(), Arrays.toString(types), Arrays.toString(paramArray));
-            Object res = ReflectUtils.invokeMethod(req.getMethodName(), obj, types, paramArray);
+
+            MethodReq mr = new MethodReq();
+            mr.setMethodName(req.getMethodName());
+            mr.setParamTypes(types);
+            mr.setParams(paramArray);
+            mr.setByteParams(req.getByteParams());
+
+            Object res = ReflectUtils.invokeMethod(mr, obj, CovertUtils::convert);
             response.setData(res);
         } catch (Throwable ex) {
             log.error(ex.getMessage(), ex);

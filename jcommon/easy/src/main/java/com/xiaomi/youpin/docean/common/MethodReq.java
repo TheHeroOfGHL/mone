@@ -14,33 +14,25 @@
  *    limitations under the License.
  */
 
-package com.xiaomi.mone.rcurve.test;
+package com.xiaomi.youpin.docean.common;
 
-import com.xiaomi.data.push.uds.codes.GsonCodes;
-import org.junit.Test;
-import org.msgpack.MessagePack;
-import org.springframework.util.Assert;
+import lombok.Data;
 
 /**
  * @author goodjava@qq.com
- * @date 1/22/21
+ * @date 1/24/21
  */
-public class CodesTest {
+@Data
+public class MethodReq {
 
-    @Test
-    public void testGsonCodes() {
-        GsonCodes codes = new GsonCodes();
-        Obj obj = new Obj();
-        obj.setId(1);
-        obj.setName("zzy");
-        byte[] data = codes.encode(obj);
-        Obj obj2 = codes.decode(data, obj.getClass());
-        System.out.println(obj2);
-        Assert.notNull(obj2, "null");
-    }
+    private String methodName;
 
+    private String[] paramTypes;
 
-    @Test
-    public void testMsgPackCodes() {
-    }
+    private byte serializeType;
+
+    private byte[][] byteParams;
+
+    private String[] params;
+
 }

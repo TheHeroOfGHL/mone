@@ -17,6 +17,7 @@
 package com.xiaomi.youpin.docean.test;
 
 import com.google.common.collect.Lists;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonArray;
 import com.xiaomi.youpin.docean.anno.Component;
 import com.xiaomi.youpin.docean.anno.Service;
@@ -29,13 +30,9 @@ import net.sf.cglib.proxy.Mixin;
 import org.junit.Test;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -44,6 +41,22 @@ import java.util.stream.Collectors;
  * @date 2020/6/22
  */
 public class CommonTest {
+
+    @Test
+    public void testTypeToken() {
+        TypeToken<List<String>> typeToken = new TypeToken<List<String>>() {
+        };
+
+        System.out.println(typeToken.getType());
+    }
+
+
+    @Test
+    public void testOptional() {
+        Optional.ofNullable(null).ifPresent(it->{
+            System.out.println(it);
+        });
+    }
 
 
     @Test
