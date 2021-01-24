@@ -14,25 +14,20 @@
  *    limitations under the License.
  */
 
-package com.xiaomi.youpin.tesla.rcurve.proxy.bootstrap;
+package com.xiaomi.youpin.tesla.rcurve.proxy.common;
 
 import com.xiaomi.youpin.docean.Ioc;
-import com.xiaomi.youpin.tesla.rcurve.proxy.ProxyServer;
-import com.xiaomi.youpin.tesla.rcurve.proxy.common.RcurveShutdownHook;
-import lombok.extern.slf4j.Slf4j;
+import com.xiaomi.youpin.tesla.rcurve.proxy.manager.ServiceManager;
 
 /**
  * @author goodjava@qq.com
- * @author dingpei
+ * @date 1/24/21
  */
-@Slf4j
-public class RcurveBootstrap {
-
-    public static void main(String... args) {
-        ProxyServer proxyServer = new ProxyServer();
-        Ioc.ins().putBean(proxyServer).init("com.xiaomi.youpin.tesla.rcurve", "com.xiaomi.youpin.docean.plugin");
-        Runtime.getRuntime().addShutdownHook(new Thread(new RcurveShutdownHook()));
-        proxyServer.openProxy();
-        log.info("tesla rcurve start finish");
+public class RcurveShutdownHook implements Runnable {
+    @Override
+    public void run() {
+        ServiceManager sm = Ioc.ins().getBean(ServiceManager.class);
+        sm.destory();
+        Ioc.ins().destory();
     }
 }
