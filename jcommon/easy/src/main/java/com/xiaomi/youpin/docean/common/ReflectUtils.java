@@ -27,12 +27,13 @@ import net.sf.cglib.reflect.FastMethod;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -239,6 +240,46 @@ public abstract class ReflectUtils {
     public static Optional<Annotation> getAnno(Class<?> clazz, List<Class<? extends Annotation>> list) {
         Annotation[] anns = clazz.getAnnotations();
         return Arrays.stream(anns).filter(a -> list.stream().filter(it -> a.annotationType().equals(it)).findAny().isPresent()).findAny();
+    }
+
+    public static Object invokeMethod(MethodReq req, Object obj, BiFunction<Class[], byte[][], Object[]> fun) {
+        return invokeMethod(req.getMethodName(), obj, req.getParamTypes(), req.getByteParams(), fun);
+    }
+
+    public static Object invokeMethod(String methodName, Object obj, String[] types, byte[][] paramArray, BiFunction<Class[], byte[][], Object[]> fun) {
+        try {
+            if (types.length > 0) {
+                Class[] clazzArray = Arrays.stream(types).map(i -> {
+                    if (i.equals("int")) {
+                        return int.class;
+                    }
+                    if (i.equals("long")) {
+                        return long.class;
+                    }
+                    try {
+                        return Class.forName(i);
+                    } catch (ClassNotFoundException e) {
+                        throw new DoceanException("class forName error:" + e.getMessage());
+                    }
+                }).toArray(Class[]::new);
+                Method method = obj.getClass().getMethod(methodName, clazzArray);
+                Object[] params = fun.apply(clazzArray, paramArray);
+                return method.invoke(obj, params);
+            } else {
+                Method method = obj.getClass().getMethod(methodName);
+                return method.invoke(obj);
+            }
+        } catch (Throwable ex) {
+            if (ex instanceof InvocationTargetException) {
+                InvocationTargetException ite = (InvocationTargetException) ex;
+                Throwable e = ite.getTargetException();
+                log.error(e.getMessage(), e);
+                throw new RuntimeException(e.getMessage(), e.getCause());
+            } else {
+                log.error(ex.getMessage(), ex);
+            }
+            throw new RuntimeException(ex);
+        }
     }
 
 }

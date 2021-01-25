@@ -47,6 +47,8 @@
         <module>docean-plugin-log</module>
         <module>docean-plugin-cat</module>
         <module>docean-plugin-mvc</module>
+        <module>docean-plugin-dmesh</module>
+        <module>docean-plugin-api</module>
     </modules>
 
     <dependencies>

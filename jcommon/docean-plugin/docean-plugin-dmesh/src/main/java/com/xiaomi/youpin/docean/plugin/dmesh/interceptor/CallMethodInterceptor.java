@@ -97,8 +97,10 @@ public class CallMethodInterceptor implements MethodInterceptor {
             throw new RuntimeException(res.getMessage());
         }
 
-        log.info("mesh plugin receive:{}", res.getData());
-        MeshResponse r = new Gson().fromJson(res.getData(), MeshResponse.class);
+        String data = res.getData(String.class);
+        log.info("mesh plugin receive:{}", data);
+
+        MeshResponse r = new Gson().fromJson(data, MeshResponse.class);
 
         Object resObj = gson.fromJson(r.getData(), method.getReturnType());
         return resObj;
